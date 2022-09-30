@@ -3,6 +3,7 @@ package gotool
 import (
 	"fmt"
 	"math"
+	"strconv"
 )
 
 // format size to string
@@ -25,4 +26,11 @@ func FormatSize(size int64) string {
 		}
 	}
 	return fmt.Sprintf("%dB", size)
+}
+
+// format float digit
+func FormatFloat(f float64, digit int16) float64 {
+	fmt_str := fmt.Sprintf("%%.%df", digit)
+	res, _ := strconv.ParseFloat(fmt.Sprintf(fmt_str, f), 64)
+	return res
 }

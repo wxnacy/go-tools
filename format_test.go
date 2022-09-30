@@ -25,3 +25,11 @@ func TestFormatSize(t *testing.T) {
 		t.Error(res)
 	}
 }
+
+func TestFormatFloat(t *testing.T) {
+	var res float64
+	res = FormatFloat(1.234, 2)
+	if res != 1.23 {
+		t.Error(res)
+	}
+}
