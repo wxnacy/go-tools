@@ -17,8 +17,12 @@ func FormatSize(size int64) string {
 				beichu = 1
 			}
 			res := float64(size) / beichu
-			return fmt.Sprintf("%.2f %s", res, suffix)
+			if float64(int64(res)) == res {
+				return fmt.Sprintf("%d%s", int64(res), suffix)
+			} else {
+				return fmt.Sprintf("%.2f%s", res, suffix)
+			}
 		}
 	}
-	return fmt.Sprintf("%d", size)
+	return fmt.Sprintf("%dB", size)
 }
