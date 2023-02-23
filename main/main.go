@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"gotool"
-	"gotool/files"
+
+	"github.com/wxnacy/gotool"
+	"github.com/wxnacy/gotool/files"
 )
 
 func main() {

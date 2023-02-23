@@ -1,9 +1,10 @@
 package files
 
 import (
-	"gotool"
 	"os"
 	"path/filepath"
+
+	"github.com/wxnacy/gotool"
 )
 
 // dir path is exists
