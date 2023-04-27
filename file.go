@@ -5,6 +5,8 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 const (
@@ -55,4 +57,34 @@ func FileWriteWithInterface(path string, data interface{}) error {
 		}
 	}
 	return ioutil.WriteFile(path, writeBytes, PermFile)
+}
+
+// 列举文件列表
+// root: 遍历的目录
+// hasHide: 是否包含隐藏文件
+// isRecursion: 是否递归子文件夹
+// fn: 需要执行的方法
+func FileList(root string, hasHide bool, isRecursion bool, fn filepath.WalkFunc) error {
+	var err error
+	err = filepath.Walk(root,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			// 不处理文件夹
+			if info.IsDir() {
+				return nil
+			}
+			dirName := filepath.Base(filepath.Dir(path))
+			// 判断是否处理隐藏文件
+			if (strings.HasPrefix(info.Name(), ".") || strings.HasPrefix(dirName, ".")) && !hasHide {
+				return nil
+			}
+			// 判断是否递归处理
+			if path != filepath.Join(root, info.Name()) && !isRecursion {
+				return nil
+			}
+			return fn(path, info, err)
+		})
+	return err
 }
