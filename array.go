@@ -1,4 +1,4 @@
-package gotool
+package tools
 
 // reflect 涉及到内存分配以后GC和大量的枚举导致性能有影响，建议优先考虑对应数据类型的方法
 

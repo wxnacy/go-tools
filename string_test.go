@@ -1,4 +1,4 @@
-package gotool
+package tools
 
 import (
 	"strings"
