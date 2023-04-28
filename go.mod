@@ -1,3 +1,3 @@
-module github.com/wxnacy/gotool
+module github.com/wxnacy/go-tools
 
 go 1.17
