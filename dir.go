@@ -2,8 +2,10 @@ package gotool
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // dir path is exists
@@ -49,4 +51,21 @@ func DirSizeFormat(path string) (string, error) {
 		return "", err
 	}
 	return FormatSize(size), nil
+}
+
+func DirFilesRemove(dir, regex string) error {
+	infos, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	paths := make([]string, 0)
+	for _, info := range infos {
+		if info.IsDir() {
+			continue
+		}
+		if strings.Contains(info.Name(), regex) {
+			paths = append(paths, filepath.Join(dir, info.Name()))
+		}
+	}
+	return FilesRemove(paths)
 }
