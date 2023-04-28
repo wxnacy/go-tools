@@ -2,6 +2,8 @@ package gotool
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -87,4 +89,47 @@ func FileList(root string, hasHide bool, isRecursion bool, fn filepath.WalkFunc)
 			return fn(path, info, err)
 		})
 	return err
+}
+
+func FilesRemove(paths []string) error {
+	errs := make([]string, 0)
+	for _, p := range paths {
+		err := os.Remove(p)
+		if err != nil {
+			errs = append(errs, fmt.Sprintf("%s: %v", p, err))
+		}
+	}
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, ", "))
+	} else {
+		return nil
+	}
+}
+
+// 自动对下载地址进行重命名
+// examples:
+// ~/download/main.go
+// ~/download/main(1).go
+// ~/download/main(2).go
+func FileAutoReDownloadName(path string) string {
+	if !FileExists(path) {
+		return path
+	}
+	i := 1
+	var newPath string
+	for true {
+		ext := strings.TrimLeft(filepath.Ext(path), ".")
+		if ext != "" {
+
+			prefix := strings.TrimRight(strings.TrimRight(path, ext), ".")
+			newPath = fmt.Sprintf("%s(%d).%s", prefix, i, ext)
+		} else {
+			newPath = fmt.Sprintf("%s(%d)", path, i)
+		}
+		if !FileExists(newPath) {
+			return newPath
+		}
+		i++
+	}
+	return path
 }
