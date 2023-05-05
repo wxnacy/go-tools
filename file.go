@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -132,4 +133,31 @@ func FileAutoReDownloadName(path string) string {
 		i++
 	}
 	return path
+}
+
+// 合并文件
+func FilesMerge(target string, sources []string, perm fs.FileMode) error {
+	writeFile, err := os.OpenFile(target, os.O_RDWR|os.O_CREATE|os.O_TRUNC, perm)
+	defer writeFile.Close()
+	if err != nil {
+		return err
+	}
+
+	appendFile := func(path string) error {
+		tempFile, err := os.Open(path)
+		defer tempFile.Close()
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(writeFile, tempFile)
+		return err
+	}
+
+	for _, path := range sources {
+		err = appendFile(path)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
