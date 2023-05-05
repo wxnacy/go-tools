@@ -3,7 +3,7 @@ package tools
 import "path/filepath"
 
 const (
-	cacheDir = "/tmp/go-tool"
+	cacheDir = "/tmp/go-tools"
 )
 
 func init() {
