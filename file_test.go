@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"strconv"
@@ -70,4 +71,20 @@ func TestFilesRemove(t *testing.T) {
 			t.Errorf("%s exist", p)
 		}
 	}
+}
+
+func TestFilesMerge(t *testing.T) {
+	os.Chdir(cacheDir)
+	paths := make([]string, 0)
+	for i := 0; i < 5; i++ {
+		path := "merge_" + strconv.Itoa(rand.Intn(1000))
+		FileWriteWithInterface(path, "w")
+		paths = append(paths, path)
+	}
+	FilesMerge("merge", paths, PermFile)
+	b, _ := ioutil.ReadFile("merge")
+	if string(b) != "wwwww" {
+		t.Errorf("%s != wwwww", string(b))
+	}
+	DirFilesRemove(cacheDir, "")
 }
