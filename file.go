@@ -127,7 +127,7 @@ func FileAutoReDownloadName(path string) string {
 		} else {
 			newPath = fmt.Sprintf("%s(%d)", path, i)
 		}
-		if !FileExists(newPath) {
+		if !PathExists(newPath) {
 			return newPath
 		}
 		i++
