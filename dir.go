@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
+	"regexp"
 )
 
 // dir path is exists
@@ -63,7 +63,11 @@ func DirFilesRemove(dir, regex string) error {
 		if info.IsDir() {
 			continue
 		}
-		if strings.Contains(info.Name(), regex) {
+		flag, err := regexp.MatchString(regex, info.Name())
+		if err != nil {
+			return err
+		}
+		if flag {
 			paths = append(paths, filepath.Join(dir, info.Name()))
 		}
 	}
