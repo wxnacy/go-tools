@@ -15,6 +15,8 @@ import (
 const (
 	PermFile fs.FileMode = 0666
 	PermDir              = 0755
+
+	FileSegmentSize = 8 * 1024 * 1024
 )
 
 // file is exists
@@ -160,4 +162,52 @@ func FilesMerge(target string, sources []string, perm fs.FileMode) error {
 		}
 	}
 	return nil
+}
+
+func FileCopy(src, dst string, segmentSize int64) error {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return fmt.Errorf("%s is not a regular file.", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer source.Close()
+
+	_, err = os.Stat(dst)
+	if err == nil {
+		return fmt.Errorf("File %s already exists.", dst)
+	}
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer destination.Close()
+
+	if err != nil {
+		return err
+	}
+
+	buf := make([]byte, segmentSize)
+	for {
+		n, err := source.Read(buf)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if n == 0 {
+			break
+		}
+
+		if _, err := destination.Write(buf[:n]); err != nil {
+			return err
+		}
+	}
+	return err
 }
