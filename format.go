@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
+	"text/template"
+	"time"
 )
 
 // format size to string
@@ -33,4 +36,16 @@ func FormatFloat(f float64, digit int16) float64 {
 	fmt_str := fmt.Sprintf("%%.%df", digit)
 	res, _ := strconv.ParseFloat(fmt.Sprintf(fmt_str, f), 64)
 	return res
+}
+
+// format template
+func FormatTemplate(tpl string, i interface{}) string {
+	tmpl, _ := template.New(IDGen()).Parse(tpl)
+	buf := new(strings.Builder)
+	_ = tmpl.Execute(buf, i)
+	return buf.String()
+}
+
+func FormatTimeDT(t time.Time) string {
+	return t.Format("2006-01-02 15:04:05")
 }
