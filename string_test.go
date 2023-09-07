@@ -16,3 +16,20 @@ func TestStringFromReader(t *testing.T) {
 		t.Errorf("err is %v", err)
 	}
 }
+
+func TestStringBackspace(t *testing.T) {
+	var in, out string
+	for _, line := range [][]string{
+		[]string{"wxnacy", "wxnac"},
+		[]string{"你好", "你"},
+		[]string{"wxnacy 你好", "wxnacy 你"},
+		[]string{"", ""},
+	} {
+		in = line[0]
+		out = line[1]
+		res := StringBackspace(in)
+		if res != out {
+			t.Errorf("StringBackspace %s == %s error %s", in, out, res)
+		}
+	}
+}

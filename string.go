@@ -14,3 +14,23 @@ func StringFromReader(r io.Reader) (string, error) {
 	}
 	return buf.String(), nil
 }
+
+// 字符串进行退格
+func StringBackspace(s string) string {
+	if s == "" {
+		return s
+	}
+	total := 0
+	for range s {
+		total++
+	}
+	res := ""
+	backIndex := 0
+	for _, r := range s {
+		backIndex++
+		if backIndex < total {
+			res += string(r)
+		}
+	}
+	return res
+}
