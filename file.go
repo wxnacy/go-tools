@@ -164,6 +164,10 @@ func FilesMerge(target string, sources []string, perm fs.FileMode) error {
 	return nil
 }
 
+// 复制文件
+// src string: 源文件
+// dst string: 目标文件
+// segmentSize int64: 分片大小
 func FileCopy(src, dst string, segmentSize int64) error {
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
