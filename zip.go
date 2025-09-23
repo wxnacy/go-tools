@@ -13,7 +13,8 @@ import (
 // ZipFile 将单个文件压缩为zip文件
 // src: 源文件路径
 // dst: 目标zip文件路径
-func ZipFile(src, dst string) (err error) {
+// args: 可选参数，支持ProgressBar接口实例
+func ZipFile(src, dst string, args ...interface{}) (err error) {
 	fw, err := os.Create(dst)
 	defer fw.Close()
 	if err != nil {
@@ -33,20 +34,44 @@ func ZipFile(src, dst string) (err error) {
 	if err != nil {
 		return err
 	}
+	defer f1.Close()
 
 	_, fileName := filepath.Split(src)
 	w1, err := zw.Create(fileName)
 	if err != nil {
 		return err
 	}
+
+	// 检查参数列表中是否包含ProgressBar实例
+	var progressBar ProgressBar
+	for _, arg := range args {
+		if p, ok := arg.(ProgressBar); ok {
+			progressBar = p
+			break
+		}
+	}
+
+	// 如果提供了进度条，则显示进度
+	if progressBar != nil {
+		progressBar.Start(1)
+	}
+
 	_, err = io.Copy(w1, f1)
+
+	// 更新进度
+	if progressBar != nil {
+		progressBar.Increment()
+		progressBar.Finish()
+	}
+
 	return err
 }
 
 // ZipDir 将整个目录压缩为zip文件，只保留最后一层目录名
 // src: 源目录路径
 // dst: 目标zip文件路径
-func ZipDir(src, dst string) (err error) {
+// args: 可选参数，支持ProgressBar接口实例
+func ZipDir(src, dst string, args ...interface{}) (err error) {
 	// 创建准备写入的文件
 	fw, err := os.Create(dst)
 	defer fw.Close()
@@ -65,6 +90,30 @@ func ZipDir(src, dst string) (err error) {
 
 	// 获取源目录的最后一个目录名
 	srcBase := filepath.Base(src)
+
+	// 检查参数列表中是否包含ProgressBar实例
+	var progressBar ProgressBar
+	for _, arg := range args {
+		if p, ok := arg.(ProgressBar); ok {
+			progressBar = p
+			break
+		}
+	}
+
+	// 计算总文件数用于进度条
+	var totalFiles int
+	if progressBar != nil {
+		filepath.Walk(src, func(path string, fi os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if !fi.IsDir() && fi.Mode().IsRegular() {
+				totalFiles++
+			}
+			return nil
+		})
+		progressBar.Start(totalFiles)
+	}
 
 	// 下面来将文件写入 zw ，因为有可能会有很多个目录及文件，所以递归处理
 	return filepath.Walk(src, func(path string, fi os.FileInfo, errBack error) (err error) {
@@ -89,7 +138,7 @@ func ZipDir(src, dst string) (err error) {
 		// 通过文件信息，创建 zip 的文件信息
 		fh, err := zip.FileInfoHeader(fi)
 		if err != nil {
-			return
+			return err
 		}
 
 		// 设置文件名
@@ -103,7 +152,7 @@ func ZipDir(src, dst string) (err error) {
 		// 写入文件信息，并返回一个 Write 结构
 		w, err := zw.CreateHeader(fh)
 		if err != nil {
-			return
+			return err
 		}
 
 		// 检测，如果不是标准文件就只写入头信息，不写入文件数据到 w
@@ -116,16 +165,19 @@ func ZipDir(src, dst string) (err error) {
 		fr, err := os.Open(path)
 		defer fr.Close()
 		if err != nil {
-			return
+			return err
 		}
 
 		// 将打开的文件 Copy 到 w
-		n, err := io.Copy(w, fr)
+		_, err = io.Copy(w, fr)
 		if err != nil {
-			return
+			return err
 		}
-		// 输出压缩的内容
-		fmt.Printf("成功压缩文件： %s, 共写入了 %d 个字符的数据\n", path, n)
+
+		// 更新进度条
+		if progressBar != nil {
+			progressBar.Increment()
+		}
 
 		return nil
 	})
@@ -134,7 +186,8 @@ func ZipDir(src, dst string) (err error) {
 // Unzip 解压zip文件到指定目录
 // src: 源zip文件路径
 // dst: 解压目标目录路径
-func Unzip(src, dst string) error {
+// args: 可选参数，支持ProgressBar接口实例
+func Unzip(src, dst string, args ...interface{}) error {
 	// 打开zip文件
 	r, err := zip.OpenReader(src)
 	if err != nil {
@@ -143,9 +196,30 @@ func Unzip(src, dst string) error {
 	defer r.Close()
 
 	// 创建目标目录
-	err = os.MkdirAll(dst, 0755)
+	err = os.MkdirAll(dst, 0o755)
 	if err != nil {
 		return err
+	}
+
+	// 检查参数列表中是否包含ProgressBar实例
+	var progressBar ProgressBar
+	for _, arg := range args {
+		if p, ok := arg.(ProgressBar); ok {
+			progressBar = p
+			break
+		}
+	}
+
+	// 如果提供了进度条，则初始化
+	if progressBar != nil {
+		// 计算总文件数
+		totalFiles := 0
+		for _, f := range r.File {
+			if !f.FileInfo().IsDir() {
+				totalFiles++
+			}
+		}
+		progressBar.Start(totalFiles)
 	}
 
 	// 遍历zip文件中的每个文件/目录
@@ -166,7 +240,7 @@ func Unzip(src, dst string) error {
 			}
 		} else {
 			// 创建文件
-			err = os.MkdirAll(filepath.Dir(fpath), 0755)
+			err = os.MkdirAll(filepath.Dir(fpath), 0o755)
 			if err != nil {
 				return err
 			}
@@ -196,8 +270,55 @@ func Unzip(src, dst string) error {
 			if err != nil {
 				return err
 			}
+
+			// 更新进度条
+			if progressBar != nil {
+				progressBar.Increment()
+			}
 		}
 	}
 
+	// 完成进度条
+	if progressBar != nil {
+		progressBar.Finish()
+	}
+
 	return nil
+}
+
+// Zip 根据src路径判断是文件还是目录，自动选择ZipFile或ZipDir进行压缩
+// src: 源文件或目录路径
+// dst: 目标zip文件路径
+// args: 可选参数，支持ProgressBar接口实例
+func Zip(src, dst string, args ...interface{}) error {
+	// 检查源路径是文件还是目录
+	info, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	// 检查参数列表中是否包含ProgressBar实例
+	var progressBar ProgressBar
+	for _, arg := range args {
+		if p, ok := arg.(ProgressBar); ok {
+			progressBar = p
+			break
+		}
+	}
+
+	// 如果提供了进度条参数，则传递给具体的函数
+	if progressBar != nil {
+		if info.IsDir() {
+			return ZipDir(src, dst, progressBar)
+		} else {
+			return ZipFile(src, dst, progressBar)
+		}
+	} else {
+		// 没有提供进度条参数
+		if info.IsDir() {
+			return ZipDir(src, dst)
+		} else {
+			return ZipFile(src, dst)
+		}
+	}
 }
