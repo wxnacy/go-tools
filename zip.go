@@ -116,7 +116,7 @@ func ZipDir(src, dst string, args ...interface{}) (err error) {
 	}
 
 	// 下面来将文件写入 zw ，因为有可能会有很多个目录及文件，所以递归处理
-	return filepath.Walk(src, func(path string, fi os.FileInfo, errBack error) (err error) {
+	err = filepath.Walk(src, func(path string, fi os.FileInfo, errBack error) (err error) {
 		if errBack != nil {
 			return errBack
 		}
@@ -181,6 +181,11 @@ func ZipDir(src, dst string, args ...interface{}) (err error) {
 
 		return nil
 	})
+	// 完成进度条
+	if progressBar != nil {
+		progressBar.Finish()
+	}
+	return err
 }
 
 // Unzip 解压zip文件到指定目录
